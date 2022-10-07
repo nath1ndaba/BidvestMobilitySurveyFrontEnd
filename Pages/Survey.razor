@@ -1,0 +1,253 @@
+﻿@page "/survey"
+
+@inject HttpClient httpClient
+@inject IDialogService DialogService
+@inject SurveyApi ApiService
+<PageTitle>Bidvest Mobility - Survey</PageTitle>
+
+@{
+    if (IsLoading)
+    {
+        <TableSkeleton HasLeft="true" />
+    }
+    else
+
+    {
+        <MudContainer MaxWidth="MaxWidth.Large" class="mt-4">
+            <!--<div>
+                <label>Programming Languages</label>
+                <div class="d-flex flex-nowrap gap-1 my-4 overflow-auto" Elevation="0">
+                    foreach (var item in ProgrammingLanguages)
+                    {
+                        <MudChip Color="Color.Primary" OnClick="@(() => GetSurveysByLanguages(item.Id))" class="px-3">@item</MudChip>
+                    }
+                </div>
+            </div>-->
+            <MudStack Justify="Justify.SpaceBetween" Row="true">
+                <MudButton Variant="Variant.Filled"
+                   Size="Size.Small" Color="Color.Primary"
+                   Class="px-2 my-3"
+                   OnClick="AddDialog">
+                    Add Survey
+                </MudButton>
+           
+            </MudStack>
+
+            <MudDataGrid T="SurveyModel" MultiSelection="true" Items="@Surveys" SortMode="SortMode.Multiple" Filterable="true" QuickFilter="@_quickFilter"
+                 Hideable="true" RowClick="@RowClicked" SelectedItemsChanged="@SelectedItemsChanged">
+                <ToolBarContent>
+                    <MudText Typo="Typo.h6">Surveys</MudText>
+                    <MudSpacer />
+                    <MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+                          AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+                </ToolBarContent>
+                <Columns>
+                    <SelectColumn T="SurveyModel" />
+                    <Column T="SurveyModel" Field="Name" Title="Name" Sortable="false" Filterable="false" />
+                    <Column T="SurveyModel" Field="Surname" />
+                    <Column T="SurveyModel" Field="ProgrammingLanguage" SortBy="@_sortBy" />
+                </Columns>
+                <PagerContent>
+                    <MudDataGridPager T="SurveyModel" />
+                </PagerContent>
+            </MudDataGrid>
+
+            <div class="d-flex flex-wrap mt-4">
+                <MudSwitch @bind-Checked="@_sortNameByLength" Color="Color.Primary">Sort Name Column By Length</MudSwitch>
+            </div>
+
+
+        </MudContainer>
+    }
+}
+@code {
+    //private IEnumerable<EmployeeDetails> Employees = new List<EmployeeDetails>();
+    private string _searchString;
+    private bool _sortNameByLength;
+    private List<string> _events = new();
+    // custom sort by name length
+    private Func<SurveyModel, object> _sortBy => x =>
+    {
+        if (_sortNameByLength)
+            return x.Name.Length;
+        else
+            return x.Name;
+    };
+    // quick filter - filter gobally across multiple columns with the same input
+    private Func<SurveyModel, bool> _quickFilter => x =>
+    {
+        if (string.IsNullOrWhiteSpace(_searchString))
+            return true;
+
+        if (x.Surname.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (x.Name.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if ($"{x.ProgrammingLanguage} ".Contains(_searchString))
+            return true;
+
+        return false;
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        ProgrammingLanguages = new List<ProgrammingLanguagesModel>();
+        Surveys = new List<SurveyModel>();
+
+        IsLoading = true;
+        await GetLanguages().ConfigureAwait(false);
+        await GetSurveys();
+
+        //Elements = await httpClient.GetFromJsonAsync<List<Element>>("webapi/periodictable");
+    }
+
+    // events
+    void RowClicked(DataGridRowClickEventArgs<SurveyModel> args)
+    {
+        _events.Insert(0, $"Event = RowClick, Index = {args.RowIndex}, Data = {System.Text.Json.JsonSerializer.Serialize(args.Item)}");
+    }
+
+    void SelectedItemsChanged(HashSet<SurveyModel> items)
+    {
+        _events.Insert(0, $"Event = SelectedItemsChanged, Data = {System.Text.Json.JsonSerializer.Serialize(items)}");
+    }
+    public List<SurveyModel> Surveys { get; set; }
+    public List<ProgrammingLanguagesModel> ProgrammingLanguages { get; set; }
+    private bool dense = true;
+    private bool hover = true;
+    private bool striped = true;
+    private bool bordered = false;
+
+    public bool _isLoading;
+    public bool IsLoading
+    {
+        get => _isLoading;
+        set
+        {
+            _isLoading = value;
+            StateHasChanged();
+        }
+    }
+
+    public bool _isLoadingByDep;
+    public bool IsLoadingByDep
+    {
+        get => _isLoadingByDep;
+        set
+        {
+            _isLoadingByDep = value;
+            StateHasChanged();
+        }
+    }
+
+
+
+    private async Task GetLanguages()
+    {
+        try
+        {
+            var response = await ApiService.GetProgrammingLanguages();
+
+            if (response.IsSuccessStatusCode)
+            {
+                var data = response?.Content?.Data;
+                //data.Insert(0, "All");
+                ProgrammingLanguages.AddRange(data);
+            }
+            else
+            {
+                ProgrammingLanguages = new List<ProgrammingLanguagesModel>();
+            }
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"Ex: {e}");
+        }
+    }
+
+
+    private async Task GetSurveys()
+    {
+        try
+        {
+            InvokeAsync((Func<Task>)(async () =>
+            {
+                IsLoadingByDep = true;
+                var response = await ApiService.GetSurveys();
+
+                if (response.IsSuccessStatusCode)
+                {
+                    this.Surveys.Clear();
+                    this.Surveys.AddRange(response?.Content?.Data);
+                    StateHasChanged();
+                }
+
+                IsLoading = false;
+                IsLoadingByDep = false;
+            }));
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"Ex: {e}");
+        }
+    }
+
+    //private async void OnPreview(SurveyModel data)
+    //{
+    //    var parameters = new DialogParameters();
+    //    parameters.Add("SubmitBtnText", "SUBMIT");
+    //    parameters.Add("Data", data);
+    //    DialogOptions closeOnEscapeKey = new DialogOptions() { MaxWidth = MaxWidth.ExtraSmall, FullWidth = true, CloseOnEscapeKey = true };
+
+    //    var result = await DialogService.Show<SurveyDialog>($"{data.Name} ", parameters, closeOnEscapeKey).Result;
+
+    //    if (!result.Cancelled)
+    //    {
+    //        Surveys.Insert(0, result.Data as SurveyModel);
+    //        StateHasChanged();
+    //    }
+
+    //}
+
+    private async void AddDialog()
+    {
+        var parameters = new DialogParameters();
+        parameters.Add("SubmitBtnText", "SUBMIT");
+        DialogOptions closeOnEscapeKey = new DialogOptions() { MaxWidth = MaxWidth.Small, FullWidth = true, CloseOnEscapeKey = true };
+
+        var result = await DialogService.Show<AddEditSurveyDialog>("New Survey", parameters, closeOnEscapeKey).Result;
+
+        if (!result.Cancelled)
+        {
+            Surveys.Insert(0, result.Data as SurveyModel);
+            StateHasChanged();
+        }
+
+    }
+
+    private async void UpdateDialog(SurveyModel data)
+    {
+        var parameters = new DialogParameters();
+        parameters.Add("Data", data);
+        parameters.Add("SubmitBtnText", "UPDATE");
+        DialogOptions closeOnEscapeKey = new DialogOptions() { MaxWidth = MaxWidth.Small, FullWidth = true, CloseOnEscapeKey = true };
+
+
+    }
+
+    private async void DeleteDialog(string id)
+    {
+        var parameters = new DialogParameters();
+        parameters.Add("TitleText", "Warning");
+        parameters.Add("ContentText", "Deleting can not be undone!");
+        parameters.Add("ButtonText", "Delete!");
+        parameters.Add("Color", Color.Error);
+
+        var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
+
+      
+
+    }
+}

@@ -1,0 +1,25 @@
+<MudContainer MaxWidth="MaxWidth.Large" class="mt-4">
+    @{
+        if(HasLeft){
+            <MudStack Justify="Justify.SpaceBetween" Row="true">
+                <MudSkeleton Width="10%" Height="42px;" />
+                <MudSkeleton Width="10%" Height="42px;" />
+            </MudStack>
+        }else{
+            <MudStack Justify="Justify.FlexEnd" Row="true">
+                <MudSkeleton Width="10%" Height="42px;" />
+            </MudStack>
+        }
+    }
+    <MudStack Justify="Justify.FlexStart" AlignItems="AlignItems.Stretch" Row="false" Spacing="2">
+        <MudSkeleton Class="mud-theme-primary" SkeletonType="SkeletonType.Rectangle" Animation="Animation.Wave" Width="100%" Height="5vh" />
+        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Animation="Animation.Wave" Width="100%" Height="3vh" />
+        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Animation="Animation.Wave" Width="100%" Height="60vh" />
+        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Animation="Animation.Wave" Width="100%" Height="5vh" />
+    </MudStack>
+</MudContainer>
+
+@code{
+    [Parameter]
+    public bool HasLeft { get; set; }
+}

@@ -1,0 +1,170 @@
+
+@inject SurveyApi ApiService
+
+<MudDialog Class="mud-theme-primary1" Style="overflow:scroll">
+    <DialogContent>
+        <MudForm Model="@model" @ref="@form" @bind-IsValid="@success" @bind-Errors="@errors">
+            @if(showErrorAlert){
+                <MudAlert Severity="Severity.Error" Square="true" Class="my-2">
+                    @ErrorMessage
+                </MudAlert>
+            }
+            <MudGrid Class="overflow-scroll">
+                <MudItem xs="12" md="6">
+                    <label>Name</label>
+                    <MudTextField @bind-Value="model.Name"
+                        For="@(() => model.Name)"
+                        Immediate="true" Margin="Margin.Dense"
+                        Required="true" RequiredError="Name is required!"
+                        Variant="Variant.Outlined" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <label>Surname</label>
+                    <MudTextField @bind-Value="model.Surname"
+                        For="@(() => model.Surname)"
+                        Immediate="true" Margin="Margin.Dense"
+                        Required="true" RequiredError="Surname is required!"
+                        Variant="Variant.Outlined" />
+                </MudItem>
+              
+                <MudItem xs="12" md="6">
+                    <label>Programming Language</label>
+                    <MudSelect @bind-Value="model.ProgrammingLanguage" 
+                        Variant="Variant.Outlined" Margin="Margin.Dense"
+                        OpenIcon="@Icons.Material.Filled.LocalDrink" 
+                        AdornmentColor="Color.Secondary"
+                        Required="true" RequiredError="Programming Language is required!"
+                        Placeholder="Select language">
+                        @foreach (var item in Languages)
+                        {
+                            <MudSelectItem Value="@item">@item</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+              
+            </MudGrid>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Submit">
+            @if (Processing)
+            {
+                <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true"/>
+                <MudText Class="ms-2">Processing</MudText>
+            }
+            else
+            {
+                <MudText>@SubmitBtnText</MudText>
+            }
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code{
+    [CascadingParameter] 
+    MudDialogInstance MudDialog { get; set; }
+    private DialogOptions dialogOptions = new() { FullWidth = true };
+    bool success;
+    string[] errors = { };
+    MudForm form;
+
+    DateTime? date = DateTime.Today;
+    DateTime? maxDate = DateTime.Today;
+    private bool showErrorAlert = false;
+    private string ErrorMessage = "";
+    public bool _processing;
+    public bool Processing
+    {
+        get => _processing;
+        set{
+            _processing = value;
+            StateHasChanged();
+        }
+    }
+
+    public List<ProgrammingLanguagesModel> Languages {get; set;}
+
+    SurveyModel model = new SurveyModel();
+
+    [Parameter] 
+    public SurveyModel Data { get; set; } = null;
+
+    [Parameter] 
+    public string SubmitBtnText { get; set; }
+
+    protected override async Task OnInitializedAsync(){
+        if(Data is not null){
+            model = Data;
+        }
+
+        Languages = new List<ProgrammingLanguagesModel>();
+        await GetLanguages().ConfigureAwait(false);
+    }
+
+    private async Task GetLanguages()
+    {
+        try
+        {
+            var response = await ApiService.GetProgrammingLanguages();
+
+            if(response.IsSuccessStatusCode){
+                //var ordered = response.Content.OrderByDescending(x => x.LeaveStartDate);
+                Languages.AddRange(response.Content.Data);
+            }
+            else{
+                Languages = new List<ProgrammingLanguagesModel>();
+            }
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"Ex: {e}");
+        }
+    }
+
+
+
+    async void Submit()
+    {
+        await form.Validate();
+
+        if(success){
+            Processing = true;
+            if(Data is null)
+            {
+                AddSurvey(model);
+            }else{
+                UpdateSurvey(model);
+            }
+        }
+    }
+
+    void Cancel() => MudDialog.Cancel();
+
+    private async void AddSurvey(SurveyModel data)
+    {
+
+
+        var response = await ApiService.AddSurvey(data);
+
+        if(response.IsSuccessStatusCode){
+            await InvokeAsync(() =>
+            {
+                var _data = response.Content.Data;
+                MudDialog.Close(DialogResult.Ok(data));
+            });
+        }
+        else{
+            showErrorAlert = true;
+            var _data = response.Error.Content?.ToResponse();
+            ErrorMessage = _data.Error;
+        }
+
+        Processing = false;
+    }
+
+    private async void UpdateSurvey(SurveyModel data)
+    {
+        
+    }
+}

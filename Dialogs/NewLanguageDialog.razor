@@ -1,0 +1,138 @@
+@inject SurveyApi ApiService
+
+<MudDialog Class="mud-theme-primary1">
+    <DialogContent>
+        <MudForm Model="@model" @ref="@form">
+            @if(showErrorAlert){
+                <MudAlert Severity="Severity.Error" Square="true" Class="my-2">@ErrorMessage</MudAlert>
+            }
+            <MudGrid>
+               
+                <MudItem xs="12">
+                    <label>Language Short Name</label>
+                    <MudTextField @bind-Value="model.LanguageShortName"
+                        For="@(() => model.LanguageShortName)"
+                        Immediate="true" Margin="Margin.Dense"
+                        Format="F2"
+                        InputType="InputType.Text"
+                        Variant="Variant.Outlined" />
+                </MudItem>
+                <MudItem xs="12">
+                    <label>Language Full Name</label>
+                    <MudTextField @bind-Value="model.LanguageFullName"
+                        For="@(() => model.LanguageFullName)"
+                        Immediate="true" Margin="Margin.Dense"
+                        Format="F2"
+                        InputType="InputType.Text"
+                        Variant="Variant.Outlined" />
+                </MudItem>
+                <MudItem xs="12">
+                    <label> Short Desscription</label>
+                    <MudTextField @bind-Value="model.LanguageShortDescription"
+                                  For="@(() => model.LanguageShortDescription)"
+                                  Immediate="true" Margin="Margin.Dense"
+                                  Format="F2"
+                                  InputType="InputType.Text"
+                                  Variant="Variant.Outlined" />
+                </MudItem>
+            </MudGrid>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Submit">
+            @if (Processing)
+            {
+                <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true"/>
+                <MudText Class="ms-2">Processing</MudText>
+            }
+            else
+            {
+                <MudText>@SubmitBtnText</MudText>
+            }
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code{
+    [CascadingParameter] 
+    MudDialogInstance? MudDialog { get; set; }
+    private DialogOptions dialogOptions = new() { FullWidth = true };
+    MudForm? form;
+    private bool showErrorAlert = false;
+    private string ErrorMessage = "";
+        
+    public bool _processing;
+    public bool Processing
+    {
+        get => _processing;
+        set{
+            _processing = value;
+            StateHasChanged();
+        }
+    }
+
+    ProgrammingLanguagesModel model = new ProgrammingLanguagesModel();
+
+    [Parameter] 
+    public ProgrammingLanguagesModel? Data { get; set; } = null;
+
+    [Parameter] 
+    public string? SubmitBtnText { get; set; }
+
+    protected override async Task OnInitializedAsync(){
+
+        if(Data is not null){
+            model = Data;
+        }
+    }
+
+
+    void Submit()
+    {
+        Processing = true;
+        if(Data is null)
+        {
+            AddLanguage(model);
+        }else{
+            model.Id = Data.Id;
+            //UpdateLanguage(model);
+        }
+    }
+
+    void Cancel() => MudDialog?.Cancel();
+
+    private async void AddLanguage(ProgrammingLanguagesModel data)
+    {
+
+        var response = await ApiService.AddProgrammingLanguage(data);
+
+        if(response.IsSuccessStatusCode){
+            MudDialog?.Close(DialogResult.Ok(response.Content.Data));
+        }
+        else{
+            showErrorAlert = true;
+            var _data = response.Error.Content?.ToResponse();
+            ErrorMessage = _data!.Error;
+        }
+
+        Processing = false;
+    }
+
+    //private async void UpdateLanguage(ProgrammingLanguagesModel data)
+    //{
+
+    //    var response = await ApiService.UpdateLanguage(data.Id.ToString(), data);
+
+    //    if(response.IsSuccessStatusCode){
+    //        MudDialog?.Close(DialogResult.Ok(response.Content.Data));
+    //    }
+    //    else{
+    //        showErrorAlert = true;
+    //        var _data = response.Error.Content?.ToResponse();
+    //        ErrorMessage = _data!.Error;
+    //    }
+
+    //    Processing = false;
+    //}
+}

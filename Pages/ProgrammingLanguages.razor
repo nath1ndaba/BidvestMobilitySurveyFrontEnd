@@ -1,0 +1,142 @@
+﻿@page "/programmingLanguages"
+@using BidvestMobilitySurveyFrontEnd.Skeletons
+@inject IDialogService DialogService
+@inject SurveyApi ApiService
+
+<PageTitle>Programming Languages</PageTitle>
+
+
+
+@{
+    if(IsLoading){
+    <CardsSkeleton/>
+    }else{
+    <MudContainer MaxWidth="MaxWidth.Large" class="mt-4">
+                <MudStack Justify="Justify.SpaceBetween" Row="true">
+                    <MudButton Variant="Variant.Filled" 
+                    Size="Size.Small" Color="Color.Primary" 
+                    Class="px-2 my-3"
+                    OnClick="AddDialog">
+                        Add Language
+                    </MudButton>
+                </MudStack>
+                <MudGrid>
+                    @foreach (var item in Languages)
+                {
+                        <MudItem xs="12" sm="3">
+                            <MudPaper Class="d-flex align-center justify-space-between border-solid border-2 mud-border-primary mud-width-full py-8 px-4" Outlined="true">
+                                @item
+                                <MudFab Class="border-solid border-2 mud-border-primary pa-4" 
+                                Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Delete" 
+                                IconColor="@Color.Primary" 
+                                    @onclick="@(()=> DeleteDialog(item.Id))"/>
+                            </MudPaper>
+                        </MudItem>
+                }
+                </MudGrid>
+    </MudContainer>
+    }
+}
+@code{
+    public List<ProgrammingLanguagesModel> Languages { get; set; }
+    public bool _isLoading;
+    public bool IsLoading
+    {
+        get => _isLoading;
+        set
+        {
+            _isLoading = value;
+            StateHasChanged();
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Languages = new List<ProgrammingLanguagesModel>();
+
+        IsLoading = true;
+        await GetProgrammingLanguages();
+    }
+
+    private async Task GetProgrammingLanguages()
+    {
+        try
+        {
+            var response = await ApiService.GetProgrammingLanguages();
+
+            if (response.IsSuccessStatusCode)
+            {
+                //var ordered = response.Content.OrderByDescending(x => x.LeaveStartDate);
+                var data = response.Content.Data;
+                Languages.AddRange(data);
+            }
+            else
+            {
+                Languages = new List<ProgrammingLanguagesModel>();
+            }
+
+            IsLoading = false;
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"Ex: {e}");
+        }
+    }
+
+    private async void AddDialog()
+    {
+        var parameters = new DialogParameters();
+        parameters.Add("SubmitBtnText", "SUBMIT");
+        DialogOptions closeOnEscapeKey = new DialogOptions() { MaxWidth = MaxWidth.Small, FullWidth = true, CloseOnEscapeKey = true };
+
+        var result = await DialogService.Show<NewLanguageDialog>("New Position Rate", parameters, closeOnEscapeKey).Result;
+
+        if (!result.Cancelled)
+        {
+            Languages.Insert(0, result.Data as ProgrammingLanguagesModel);
+            StateHasChanged();
+        }
+
+    }
+
+    private async void DeleteDialog(string landuageId)
+    {
+        var parameters = new DialogParameters();
+        parameters.Add("TitleText", "Warning");
+        parameters.Add("ContentText", "Deleting can not be undone!");
+        parameters.Add("ButtonText", "Delete!");
+        parameters.Add("Color", Color.Error);
+
+        var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
+
+        var result = await DialogService.Show<Alert>("Warning", parameters).Result;
+
+        if (!result.Cancelled)
+        {
+            await ApiService.RemoveProgrammingLanguage( landuageId).ContinueWith((t) =>
+            {
+                var response = t.Result;
+
+                if (response.IsSuccessStatusCode)
+                {
+                    InvokeAsync(() =>
+                    {
+                        int index = Languages.FindIndex(a => a.Id == landuageId);
+                        if (index > -1)
+                        {
+                            Languages.RemoveAt(index);
+                            StateHasChanged();
+                        }
+                    });
+                }
+                else
+                {
+
+                }
+            });
+        }
+
+    }
+
+
+}
