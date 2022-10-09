@@ -5,8 +5,6 @@
 
 <PageTitle>Programming Languages</PageTitle>
 
-
-
 @{
     if(IsLoading){
     <CardsSkeleton/>
@@ -89,7 +87,7 @@
         parameters.Add("SubmitBtnText", "SUBMIT");
         DialogOptions closeOnEscapeKey = new DialogOptions() { MaxWidth = MaxWidth.Small, FullWidth = true, CloseOnEscapeKey = true };
 
-        var result = await DialogService.Show<NewLanguageDialog>("New Position Rate", parameters, closeOnEscapeKey).Result;
+        var result = await DialogService.Show<NewLanguageDialog>("New Language", parameters, closeOnEscapeKey).Result;
 
         if (!result.Cancelled)
         {

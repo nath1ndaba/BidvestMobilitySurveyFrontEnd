@@ -1,6 +1,4 @@
-﻿using System.Text.Json.Serialization;
-
-namespace BidvestMobilitySurveyFrontEnd.Models;
+﻿namespace BidvestMobilitySurveyFrontEnd.Models;
 
 public class ProgrammingLanguagesModel
 {

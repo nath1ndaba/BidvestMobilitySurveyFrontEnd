@@ -8,7 +8,10 @@ public interface SurveyApi
     Task<ApiResponse<Response<ProgrammingLanguagesModel>>> AddProgrammingLanguage([Body(BodySerializationMethod.Serialized)]  ProgrammingLanguagesModel programming); 
     
     [Delete("/api/v1/ProgrammingLanguages/{id}")]
-    Task<ApiResponse<Response<ProgrammingLanguagesModel>>> RemoveProgrammingLanguage( string id);
+    Task<ApiResponse<Response<ProgrammingLanguagesModel>>> RemoveProgrammingLanguage( string id); 
+    
+    [Delete("/api/v1/ProgrammingLanguages/{id}")]
+    Task<ApiResponse<Response<ProgrammingLanguagesModel>>> UpdateProgrammingLanguage( string id, ProgrammingLanguagesModel data);
 
     [Get("/api/v1/ProgrammingLanguages/Languages")]
     Task<ApiResponse<Response<List<ProgrammingLanguagesModel>>>> GetProgrammingLanguages();

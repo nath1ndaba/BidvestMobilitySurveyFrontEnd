@@ -10,7 +10,7 @@
                 </MudAlert>
             }
             <MudGrid Class="overflow-scroll">
-                <MudItem xs="12" md="6">
+                <MudItem xs="12" >
                     <label>Name</label>
                     <MudTextField @bind-Value="model.Name"
                         For="@(() => model.Name)"
@@ -18,7 +18,7 @@
                         Required="true" RequiredError="Name is required!"
                         Variant="Variant.Outlined" />
                 </MudItem>
-                <MudItem xs="12" md="6">
+                <MudItem xs="12" >
                     <label>Surname</label>
                     <MudTextField @bind-Value="model.Surname"
                         For="@(() => model.Surname)"
@@ -27,7 +27,7 @@
                         Variant="Variant.Outlined" />
                 </MudItem>
               
-                <MudItem xs="12" md="6">
+                <MudItem xs="12">
                     <label>Programming Language</label>
                     <MudSelect @bind-Value="model.ProgrammingLanguage" 
                         Variant="Variant.Outlined" Margin="Margin.Dense"
@@ -37,7 +37,7 @@
                         Placeholder="Select language">
                         @foreach (var item in Languages)
                         {
-                            <MudSelectItem Value="@item">@item</MudSelectItem>
+                            <MudSelectItem Value="@item.Id">@item.LanguageFullName</MudSelectItem>
                         }
                     </MudSelect>
                 </MudItem>
@@ -110,7 +110,7 @@
 
             if(response.IsSuccessStatusCode){
                 //var ordered = response.Content.OrderByDescending(x => x.LeaveStartDate);
-                Languages.AddRange(response.Content.Data);
+                Languages.AddRange(response.Content.Data!);
             }
             else{
                 Languages = new List<ProgrammingLanguagesModel>();

@@ -96,7 +96,7 @@
             AddLanguage(model);
         }else{
             model.Id = Data.Id;
-            //UpdateLanguage(model);
+            UpdateProgrammingLanguage(model);
         }
     }
 
@@ -119,20 +119,20 @@
         Processing = false;
     }
 
-    //private async void UpdateLanguage(ProgrammingLanguagesModel data)
-    //{
+    private async void UpdateProgrammingLanguage(ProgrammingLanguagesModel data)
+    {
 
-    //    var response = await ApiService.UpdateLanguage(data.Id.ToString(), data);
+        var response = await ApiService.UpdateProgrammingLanguage(data.Id.ToString(), data);
 
-    //    if(response.IsSuccessStatusCode){
-    //        MudDialog?.Close(DialogResult.Ok(response.Content.Data));
-    //    }
-    //    else{
-    //        showErrorAlert = true;
-    //        var _data = response.Error.Content?.ToResponse();
-    //        ErrorMessage = _data!.Error;
-    //    }
+        if(response.IsSuccessStatusCode){
+            MudDialog?.Close(DialogResult.Ok(response.Content.Data));
+        }
+        else{
+            showErrorAlert = true;
+            var _data = response.Error.Content?.ToResponse();
+            ErrorMessage = _data!.Error;
+        }
 
-    //    Processing = false;
-    //}
+        Processing = false;
+    }
 }
